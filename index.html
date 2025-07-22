@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>完璧な計画</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #222;
+            color: #fff;
+            padding: 20px;
+        }
+        #gameArea {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #333;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            background-color: #b22222;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #8b0000;
+        }
+        .status {
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .progress-bar {
+            width: 100%;
+            background: #555;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .progress {
+            height: 20px;
+            background: #b22222;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameArea">
+        <h1>完璧な計画</h1>
+        <p>夫を選んでください:</p>
+        <button onclick="startGame('doctor')">医者 (高収入、敏感)</button>
+        <button onclick="startGame('office')">会社員 (中収入、やや敏感)</button>
+        <button onclick="startGame('freelancer')">フリーター (低収入、鈍感)</button>
+    </div>
+
+    <script>
+        let gameState = {
+            husband: null,
+            hp: 0,
+            trust: 50,
+            risk: 0,
+            money: 10000,
+            insurance: 0,
+            premium: 100,
+            month: 0,
+            trustMonths: 0,
+            maxTrust: 100,
+            cookingSkill: 0,
+            dilemma: false
+        };
+
+        const husbands = {
+            doctor: { hp: 150, income: 5000, sensitivity: 0.3, favorite: '寿司', favoriteCost: 3000, favoriteTrust: 20 },
+            office: { hp: 120, income: 3000, sensitivity: 0.2, favorite: 'ハンバーグ', favoriteCost: 2000, favoriteTrust: 15 },
+            freelancer: { hp: 100, income: 1000, sensitivity: 0.1, favorite: 'ラーメン',召唤
+
+System: 好きなラーメン', favoriteCost: 1000, favoriteTrust: 10 }
+        };
+
+        function startGame(husbandType) {
+            gameState.husband = husbandType;
+            gameState.hp = husbands[husbandType].hp;
+            gameState.trust = 50;
+            gameState.risk = 0;
+            gameState.money = 10000;
+            gameState.insurance = 0;
+            gameState.premium = 100;
+            gameState.month = 0;
+            gameState.trustMonths = 0;
+            gameState.maxTrust = 100;
+            gameState.cookingSkill = 0;
+            gameState.dilemma = false;
+            updateGameScreen();
+        }
+
+        function updateGameScreen() {
+            const gameArea = document.getElementById('gameArea');
+            const husband = husbands[gameState.husband];
+            const trustLabel = gameState.trust >= 80 ? '好感度' : '信頼度';
+            gameArea.innerHTML = `
+                <h1>完璧な計画 - 月 ${gameState.month + 1}</h1>
+                <p>夫: ${gameState.husband === 'doctor' ? '医者' : gameState.husband === 'office' ? '会社員' : 'フリーター'}</p>
+                <div class="status">夫のHP: <div class="progress-bar"><div class="progress" style="width: ${gameState.hp / husband.hp * 100}%"></div></div></div>
+                <div class="status">${trustLabel}: <div class="progress-bar"><div class="progress" style="width: ${gameState.trust / gameState.maxTrust * 100}%"></div></div></div>
+                <div class="status">発覚リスク: <div class="progress-bar"><div class="progress" style="width: ${gameState.risk}%"></div></div></div>
+                <div class="status">所持金: ${gameState.money}円</div>
+                <div class="status">保険金: ${gameState.insurance}円 (掛け金: ${gameState.premium}円/月)</div>
+                <div class="status">料理スキル: ${gameState.cookingSkill}</div>
+                <p>料理を選んでください:</p>
+                <button onclick="playTurn('normal')">普通の料理 (-500円, +5信頼)</button>
+                <button onclick="playTurn('favorite')">好物の${husband.favorite} (-${husband.favoriteCost}円, +${husband.favoriteTrust}信頼, -5%リスク)</button>
+                <button onclick="playTurn('special')">手の込んだ料理 (-4000円, +30信頼, -10%リスク)</button>
+                <button onclick="playTurn('poison1')">不凍液少量 (-5信頼, +5ダメージ)</button>
+                <button onclick="playTurn('poison2')">不凍液中量 (-10信頼, +15ダメージ)</button>
+                <button onclick="playTurn('poison3')">不凍液多量 (-20信頼, +30ダメージ)</button>
+                <p>保険金の掛け金を調整:</p>
+                <button onclick="changePremium(100)">低 (100円)</button>
+                <button onclick="changePremium(500)">中 (500円)</button>
+                <button onclick="changePremium(1000)">高 (1000円)</button>
+            `;
+        }
+
+        function playTurn(cookingType) {
+            gameState.month++;
+            const husband = husbands[gameState.husband];
+            let damage = 0, riskIncrease = 0, trustChange = 0, cost = 0;
+
+            // 料理による影響
+            if (cookingType === 'normal') {
+                cost = 500;
+                trustChange = 5;
+                gameState.cookingSkill++;
+            } else if (cookingType === 'favorite') {
+                cost = husband.favoriteCost;
+                trustChange = husband.favoriteTrust;
+                gameState.risk = Math.max(0, gameState.risk - 5);
+                gameState.cookingSkill++;
+            } else if (cookingType === 'special') {
+                cost = 4000;
+                trustChange = 30;
+                gameState.risk = Math.max(0, gameState.risk - 10);
+                gameState.cookingSkill++;
+            } else if (cookingType === 'poison1') {
+                damage = 5;
+                riskIncrease = 5 + husband.sensitivity * 10;
+                trustChange = -5;
+            } else if (cookingType === 'poison2') {
+                damage = 15;
+                riskIncrease = 15 + husband.sensitivity * 10;
+                trustChange = -10;
+            } else if (cookingType === 'poison3') {
+                damage = 30;
+                riskIncrease = 30 + husband.sensitivity * 10;
+                trustChange = -20;
+            }
+
+            // 料理スキルによるリスク軽減
+            const skillReduction = Math.min(15, Math.floor(gameState.cookingSkill / 5) * 5);
+            riskIncrease = Math.max(0, riskIncrease - skillReduction);
+
+            // 更新
+            gameState.hp = Math.max(0, gameState.hp - damage);
+            gameState.trust = Math.max(0, Math.min(gameState.maxTrust, gameState.trust + trustChange));
+            gameState.risk = Math.min(100, gameState.risk + riskIncrease);
+            gameState.money -= cost + gameState.premium + 2000;
+            gameState.insurance += gameState.premium;
+            gameState.money += husband.income;
+
+            // 好感度システム
+            if (gameState.trust >= 100 && gameState.trustMonths >= 6 && !gameState.dilemma) {
+                showDilemma();
+                return;
+            }
+            if (gameState.trust === 100) {
+                gameState.trustMonths++;
+            } else {
+                gameState.trustMonths = 0;
+            }
+            if (gameState.trust >= 200) {
+                endGame('happy');
+                return;
+            }
+
+            // ランダムイベント
+            if (Math.random() < 0.2) {
+                handleRandomEvent();
+                return;
+            }
+
+            // 終了判定
+            if (gameState.hp <= 0) {
+                if (Math.random() < gameState.risk / 100) {
+                    endGame('caught');
+                } else {
+                    endGame('success');
+                }
+            } else if (gameState.risk >= 100) {
+                endGame('caught');
+            } else if (gameState.money < 0) {
+                endGame('bankrupt');
+            } else if (gameState.trust === 0) {
+                endGame('divorce');
+            } else {
+                updateGameScreen();
+            }
+        }
+
+        function changePremium(amount) {
+            gameState.premium = amount;
+            gameState.risk += amount > 100 ? 10 : 0;
+            updateGameScreen();
+        }
+
+        function showDilemma() {
+            gameState.dilemma = true;
+            gameState.maxTrust = 200;
+            const gameArea = document.getElementById('gameArea');
+            gameArea.innerHTML = `
+                <h1>葛藤</h1>
+                <p>夫の好感度が最大に達しました。夫の笑顔を見ていると、本当に計画を続けていいのか悩み始めます...</p>
+                <button onclick="gameState.maxTrust = 100; updateGameScreen()">計画を続ける</button>
+                <button onclick="updateGameScreen()">夫を信じる</button>
+            `;
+        }
+
+        function handleRandomEvent() {
+            const events = [
+                {
+                    text: '夫が「味がおかしい」と医者に相談！誤魔化しますか？',
+                    action: () => {
+                        if (Math.random() < gameState.trust / gameState.maxTrust) {
+                            gameState.risk += 10;
+                            updateGameScreen();
+                        } else {
+                            endGame('caught');
+                        }
+                    }
+                },
+                {
+                    text: '保険会社の調査員が訪問！誤魔化しますか？',
+                    action: () => {
+                        if (Math.random() < gameState.trust / gameState.maxTrust) {
+                            gameState.risk += 15;
+                            updateGameScreen();
+                        } else {
+                            endGame('caught');
+                        }
+                    }
+                },
+                {
+                    text: `${husbands[gameState.husband].favorite}を食べに来た夫の友人が味に疑問を抱いた！誤魔化しますか？`,
+                    action: () => {
+                        if (Math.random() < gameState.trust / gameState.maxTrust) {
+                            gameState.risk += 10;
+                            updateGameScreen();
+                        } else {
+                            endGame('caught');
+                        }
+                    }
+                }
+            ];
+            const event = events[Math.floor(Math.random() * events.length)];
+            const gameArea = document.getElementById('gameArea');
+            gameArea.innerHTML = `
+                <h1>イベント発生！</h1>
+                <p>${event.text}</p>
+                <button onclick="event.action()">誤魔化す</button>
+                <button onclick="endGame('caught')">無視する</button>
+            `;
+        }
+
+        function endGame(result) {
+            const gameArea = document.getElementById('gameArea');
+            let message = '';
+            if (result === 'success') {
+                message = `夫が死にました！保険金${gameState.insurance}円を獲得！スコア: ${gameState.insurance}`;
+            } else if (result === 'happy') {
+                message = '夫が大富豪に！莫大な財産を共有し、幸せな生活が始まりました！スコア: ${gameState.insurance * 2}';
+            } else if (result === 'caught') {
+                message = '発覚しました！あなたは逮捕されました...ゲームオーバー。';
+            } else if (result === 'bankrupt') {
+                message = '生活費が尽きました...夫にバレて破綻。ゲームオーバー。';
+            } else if (result === 'divorce') {
+                message = '信頼を失い、夫が離婚を切り出しました...ゲームオーバー。';
+            }
+            gameArea.innerHTML = `
+                <h1>ゲーム終了</h1>
+                <p>${message}</p>
+                <button onclick="startGame(gameState.husband)">もう一度遊ぶ</button>
+            `;
+        }
+    </script>
+</body>
+</html>
